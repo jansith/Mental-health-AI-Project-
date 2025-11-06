@@ -35,5 +35,10 @@ urlpatterns = [
    
    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+   path('register/',CreateUserApi.as_view(), name='register'),
+   path('login/', LoginView.as_view(), name='login'),
+   path('doctor/profile/', DoctorProfileApi.as_view(), name='doctor-profile'),
+   path('patient/profile/', PatientProfileApi.as_view(), name='patient-profile'),
+   path('doctors/<int:id>/approve/', DoctorApprovalAPIView.as_view(), name='doctor-approval'),
 
 ]
