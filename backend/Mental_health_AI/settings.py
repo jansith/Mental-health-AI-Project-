@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'project_app',
     'drf_yasg',
+    'appointment_app',
     # 'corsheaders',
 ]
 
