@@ -10,20 +10,12 @@ class CreateUserApi(APIView):
     def post(self, request):
         serializer = RegisterUserSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.save()
+            serializer.save()
             
-            # Create profile based on role
-            if user.role == 'doctor':
-                DoctorProfile.objects.create(user=user)
-            elif user.role == 'patient':
-                PatientProfile.objects.create(user=user)
-            
-            # Return user data without password
-            user_serializer = UserSerializer(user)
             return Response({
                 'status': 'success',
                 'message': 'User created successfully',
-                'data': user_serializer.data
+                'data': serializer.data
             }, status=status.HTTP_201_CREATED)
         
         return Response({
@@ -35,7 +27,7 @@ class CreateUserApi(APIView):
     def get(self, request):
         try:
             users = CustomUser.objects.all()
-            serializer = UserSerializer(users, many=True)
+            serializer = RegisterUserSerializer(users, many=True)
             return Response({
                 'status': 'success',
                 'message': 'Users data retrieved successfully',
@@ -86,11 +78,11 @@ class LoginView(APIView):
 class DoctorProfileApi(APIView):
     
     def post(self, request):
-        if request.user.role != 'doctor':
-            return Response({
-                'status': 'error',
-                'message': 'Only doctors can create doctor profiles'
-            }, status=status.HTTP_403_FORBIDDEN)
+        # if request.user.role != 'doctor':
+        #     return Response({
+        #         'status': 'error',
+        #         'message': 'Only doctors can create doctor profiles'
+        #     }, status=status.HTTP_403_FORBIDDEN)
         
         # Check if profile already exists
         if hasattr(request.user, 'doctor_profile'):
@@ -101,8 +93,8 @@ class DoctorProfileApi(APIView):
         
         serializer = DoctorProfileSerializer(data=request.data)
         if serializer.is_valid():
-            # Associate with current user
-            serializer.save(user=request.user)
+            serializer.save()
+            # serializer.save(user=request.user)
             return Response({
                 'status': 'success',
                 'message': 'Doctor profile created successfully',
@@ -115,29 +107,81 @@ class DoctorProfileApi(APIView):
             'errors': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
     
-    def get(self, request):
-        """Get doctor profile"""
-        if not hasattr(request.user, 'doctor_profile'):
+    def get(self, request, id=None):
+        try:
+
+            if id is not None:
+                doctor_profile = DoctorProfile.objects.get(id=id)
+                serializer = DoctorProfileSerializer(doctor_profile)
+                return Response({
+                    'status': 'success',
+                    'message': 'Doctor profile retrieved successfully',
+                    'data': serializer.data
+                }, status=status.HTTP_200_OK)
+            
+            
+            doctor_profiles = DoctorProfile.objects.all()
+            serializer = DoctorProfileSerializer(doctor_profiles, many=True)
+            return Response({
+                'status': 'success',
+                'message': 'Doctor profiles retrieved successfully',
+                'data': serializer.data,
+                'count': len(serializer.data)  
+            }, status=status.HTTP_200_OK)
+        
+        except DoctorProfile.DoesNotExist:
             return Response({
                 'status': 'error',
                 'message': 'Doctor profile not found'
             }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'status': 'error',
+                'message': 'Failed to retrieve doctor profiles',
+                'error': str(e)  
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-        serializer = DoctorProfileSerializer(request.user.doctor_profile)
+    def put(self, request, id):
+        try:
+            doctorprofile = DoctorProfile.objects.get(id=id)
+            serializer = DoctorProfileSerializer(doctorprofile, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    'status' : 'success',
+                    'message' : 'Doctor profle details edtied sucessfully',
+                    'data' : serializer.data
+                }, status=status.HTTP_200_OK)
+            
+            return Response({
+                'status': 'error',
+                'message': 'Doctor profile details editing failed',
+                'errors': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        except DoctorProfile.DoesNotExist:
+            return Response({
+                'status': 'error',
+                'message': 'Doctor profile not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+    
+    def delete(self, request, id):
+        doctorprofile = DoctorProfile.objects.get(id=id)
+        doctorprofile.delete()
         return Response({
-            'status': 'success',
-            'data': serializer.data
-        })
-
+            'status' : 'success',
+            'message' : 'doctor details deleted successfully'
+        }, status=status.HTTP_204_NO_CONTENT)
+        
 class PatientProfileApi(APIView): 
     
     def post(self, request):
         
-        if request.user.role != 'patient':
-            return Response({
-                'status': 'error',
-                'message': 'Only patients can create patient profiles'
-            }, status=status.HTTP_403_FORBIDDEN)
+        # if request.user.role != 'patient':
+        #     return Response({
+        #         'status': 'error',
+        #         'message': 'Only patients can create patient profiles'
+        #     }, status=status.HTTP_403_FORBIDDEN)
         
         # Check if profile already exists
         if hasattr(request.user, 'patient_profile'):
@@ -148,7 +192,7 @@ class PatientProfileApi(APIView):
         
         serializer = PatientProfileSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(user=request.user)
+            serializer.save()
             return Response({
                 'status': 'success',
                 'message': 'Patient profile created successfully',
@@ -161,24 +205,90 @@ class PatientProfileApi(APIView):
             'errors': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
     
-    def get(self, request):
+    def get(self, request, id=None):
+        try:
+            
+            if id is not None:
+                patient_profile = PatientProfile.objects.get(id=id)
+                serializer = PatientProfileSerializer(patient_profile)
+                return Response({
+                    'status': 'success',
+                    'message': 'Patient profile retrieved successfully',
+                    'data': serializer.data
+                }, status=status.HTTP_200_OK)
+            
+            
+            patient_profiles = PatientProfile.objects.all()
+            serializer = PatientProfileSerializer(patient_profiles, many=True)
+            return Response({
+                'status': 'success',
+                'message': 'Patient profiles retrieved successfully',
+                'data': serializer.data,
+                'count': len(serializer.data)  
+            }, status=status.HTTP_200_OK)
         
-        if not hasattr(request.user, 'patient_profile'):
+        except PatientProfile.DoesNotExist:
             return Response({
                 'status': 'error',
                 'message': 'Patient profile not found'
             }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'status': 'error',
+                'message': 'Failed to retrieve patient profiles',
+                'error': str(e)  
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-        serializer = PatientProfileSerializer(request.user.patient_profile)
+    def put(self, request, id):
+        try:
+            patientProfile = PatientProfile.objects.get(id=id)
+            serializer = PatientProfileSerializer(patientProfile, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    'status' : 'success',
+                    'message' : 'Patient profle details edtied sucessfully',
+                    'data' : serializer.data
+                }, status=status.HTTP_200_OK)
+            
+            return Response({
+                'status': 'error',
+                'message': 'Patient profile details editing failed',
+                'errors': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        except PatientProfile.DoesNotExist:
+            return Response({
+                'status': 'error',
+                'message': 'patient profile not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+    
+    def delete(self, request, id):
+        patientprofile = PatientProfile.objects.get(id=id)
+        patientprofile.delete()
         return Response({
-            'status': 'success',
-            'data': serializer.data
-        })
+            'status' : 'success',
+            'message' : 'patient details deleted successfully'
+        }, status=status.HTTP_204_NO_CONTENT)
     
 class DoctorApprovalAPIView(APIView):
 
     def patch(self, request, id):
-        doctor_profile = DoctorProfile.objects.get(id=id)
+        try:
+            doctor_profile = DoctorProfile.objects.get(id=id)
+        except DoctorProfile.DoesNotExist:
+            return Response({
+                'status': 'error',
+                'message': 'Doctor profile not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Check if user has permission to approve doctors
+        if not request.user.is_staff and request.user.role != 'admin':
+            return Response({
+                'status': 'error',
+                'message': 'Only admin users can approve doctors'
+            }, status=status.HTTP_403_FORBIDDEN)
+
         new_status = request.data.get('status')
         
         if new_status not in ['approved', 'rejected']:

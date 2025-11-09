@@ -38,7 +38,11 @@ urlpatterns = [
    path('register/',CreateUserApi.as_view(), name='register'),
    path('login/', LoginView.as_view(), name='login'),
    path('doctor/profile/', DoctorProfileApi.as_view(), name='doctor-profile'),
+   path('doctor-profiles/<int:id>/', DoctorProfileApi.as_view(), name='doctor-profile-detail'),
+   path('doctor-profiles/edit/<int:id>/', DoctorProfileApi.as_view(), name='doctor-profile-edit'),
    path('patient/profile/', PatientProfileApi.as_view(), name='patient-profile'),
+   path('patient-profiles/<int:id>/', PatientProfileApi.as_view(), name='patient-profile-detail'),
+   path('patient-profiles/edit/<int:id>/', PatientProfileApi.as_view(), name='patient-profile-edit'),
    path('doctors/<int:id>/approve/', DoctorApprovalAPIView.as_view(), name='doctor-approval'),
 
 ]

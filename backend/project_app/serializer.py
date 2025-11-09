@@ -69,6 +69,11 @@ class UserSerializer(serializers.ModelSerializer):
 
 class DoctorProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
+    user_id = serializers.PrimaryKeyRelatedField(
+        queryset=CustomUser.objects.filter(role='doctor'), 
+        write_only=True,
+        source='user'
+    )
     
     class Meta:
         model = DoctorProfile
@@ -77,20 +82,25 @@ class DoctorProfileSerializer(serializers.ModelSerializer):
 
 class PatientProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
+    user_id = serializers.PrimaryKeyRelatedField(
+        queryset=CustomUser.objects.filter(role='patient'), 
+        write_only=True,
+        source='user'
+    )
     
     class Meta:
         model = PatientProfile
         fields = '__all__'
 
-class DoctorProfileCreateSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(write_only=True)
-    full_name = serializers.CharField(write_only=True)
-    password = serializers.CharField(write_only=True)
+# class DoctorProfileCreateSerializer(serializers.ModelSerializer):
+#     email = serializers.EmailField(write_only=True)
+#     full_name = serializers.CharField(write_only=True)
+#     password = serializers.CharField(write_only=True)
     
-    class Meta:
-        model = DoctorProfile
-        exclude = ('user', 'status')
+#     class Meta:
+#         model = DoctorProfile
+#         exclude = ('user', 'status')
         
-    def create(self, validated_data):
-        # This would be handled in the view
-        pass 
+    # def create(self, validated_data):
+    #     # This would be handled in the view
+    #     pass 
