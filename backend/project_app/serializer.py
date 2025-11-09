@@ -93,4 +93,4 @@ class DoctorProfileCreateSerializer(serializers.ModelSerializer):
         
     def create(self, validated_data):
         # This would be handled in the view
-        pass
+        pass 
